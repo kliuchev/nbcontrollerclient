@@ -8,7 +8,6 @@ class NBControllerClient {
 
     static shared = new NBControllerClient();
 
-    bleManager = BleManager;
     bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
     neededService = '0000ffe0-0000-1000-8000-00805f9b34fb';
     neededChar = '0000ffe1-0000-1000-8000-00805f9b34fb';
@@ -33,7 +32,7 @@ class NBControllerClient {
 
     findDevice = (postmachineName, timeout = 3000, checkPeriod = 500) => {
         return new Promise((resolve, reject) => {
-            this.bleManager.scan([], timeout / 1000, false)
+            BleManager.scan([], timeout / 1000, false)
                 .then(() => {
                     let intervalId = null;
                     let timeoutId = setTimeout(() => {
@@ -43,9 +42,9 @@ class NBControllerClient {
 
                     intervalId = setInterval(async () => {
                         try {
-                            const discoveredDevices = await this.bleManager.getDiscoveredPeripherals();
-                            const bondedDevices = await this.bleManager.getBondedPeripherals()
-                            const connectedDevices = await this.bleManager.getConnectedPeripherals();
+                            const discoveredDevices = await BleManager.getDiscoveredPeripherals();
+                            const bondedDevices = await BleManager.getBondedPeripherals()
+                            const connectedDevices = await BleManager.getConnectedPeripherals();
                             const devices = [ ...discoveredDevices, ...bondedDevices, ...connectedDevices];
                             const device = devices.find(item => item.name === postmachineName);
                             if (device) {
@@ -66,7 +65,7 @@ class NBControllerClient {
         })
     }
 
-    cancelScan = () => this.bleManager.stopScan()
+    cancelScan = () => BleManager.stopScan()
 
     send = (device, command, responseTime = 500, short = false) => {
         return new Promise(async (resolve, reject) => {
@@ -113,13 +112,13 @@ class NBControllerClient {
         });
     }
 
-    disconnect = id => this.bleManager.disconnect(id)
+    disconnect = id => BleManager.disconnect(id)
 
     connect = async (deviceId, attemptsCount = 5) => {
         let connected = false
         for (let i = 0; i < attemptsCount; i++) {
             try {
-                await this.bleManager.connect(deviceId)
+                await BleManager.connect(deviceId)
                 connected = true
                 break
             } catch (error) {
