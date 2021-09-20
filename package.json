@@ -1,0 +1,25 @@
+{
+  "name": "nb-controller-client",
+  "version": "1.0.0",
+  "description": "Client for BLE devices",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kliuchev/nbcontrollerclient.git"
+  },
+  "keywords": [
+    "BLE",
+    "bluetooth",
+    "ios",
+    "android"
+  ],
+  "author": "Sviatoslav Kliuchev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kliuchev/nbcontrollerclient/issues"
+  },
+  "homepage": "https://github.com/kliuchev/nbcontrollerclient#readme"
+}
