@@ -35,7 +35,7 @@ class NBControllerClient {
     onStart = () => console.log('BleManager started')
     onStartError = error => console.log(`BleManager start error: ${error.message}`)
 
-    findDevice = (deviceName, searchTimeout = 5000, log = msg => {}) => {
+    findDevice = (deviceId, searchTimeout = 5000, log = msg => {}) => {
         return new Promise((resolve, reject) => {
             this.bleManager.scan([], searchTimeout / 1000, false)
                 .then(() => {
@@ -52,7 +52,7 @@ class NBControllerClient {
                             const bondedDevices = await BleManager.getBondedPeripherals()
                             const connectedDevices = await BleManager.getConnectedPeripherals();
                             const devices = [...discoveredDevices, ...bondedDevices, ...connectedDevices]
-                            const device = devices.find(item => item.name === deviceName);
+                            const device = devices.find(item => item.name === deviceId);
                             if (device) {
                                 clearInterval(intervalId);
                                 clearTimeout(timeoutId);
@@ -71,14 +71,14 @@ class NBControllerClient {
 
     cancelScan = () => this.bleManager.stopScan()
 
-    connect = async (device, log = (error, msg) => {}) => {
+    connect = async (deviceId, log = (error, msg) => {}) => {
         let error = null
         for (let i = 0; i < this.connectionAttempts; i++) {
             try {
                 log(null, `connection attempt ${i + 1}`)
-                await this.bleManager.connect(device.id)
+                await this.bleManager.connect(deviceId)
                 log(null, `retrieve attempt ${i + 1}`)
-                await this.bleManager.retrieveServices(device.id);
+                await this.bleManager.retrieveServices(deviceId);
                 error = null
                 break
             } catch (err) {
@@ -93,7 +93,7 @@ class NBControllerClient {
         }
     }
 
-    send = (deviceName, command, responseTimeout = 500, short = true) => {
+    send = (deviceId, command, responseTimeout = 500, short = true) => {
         return new Promise(async (resolve, reject) => {
             await this.bleManager.startNotification(device.id, this.neededService, this.neededChar);
             let response = null
@@ -116,7 +116,7 @@ class NBControllerClient {
             try {
                 await this.bleManager
                     .writeWithoutResponse(
-                        deviceName,
+                        deviceId,
                         this.neededService,
                         this.neededChar,
                         stringToBytes(`${command}\r\n`),
@@ -136,7 +136,7 @@ class NBControllerClient {
         })
     }
 
-    disconnect = deviceName => this.bleManager.disconnect(deviceName)
+    disconnect = deviceId => this.bleManager.disconnect(deviceId)
 
     findAllPostmachinesNearby = (searchTimeout = 5000, log = (error, msg, data) => {}) => {
         return new Promise((resolve, reject) => {
