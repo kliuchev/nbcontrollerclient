@@ -95,7 +95,7 @@ class NBControllerClient {
 
     send = (deviceId, command, responseTimeout = 500, short = true) => {
         return new Promise(async (resolve, reject) => {
-            await this.bleManager.startNotification(device.id, this.neededService, this.neededChar);
+            await this.bleManager.startNotification(deviceId, this.neededService, this.neededChar);
             let response = null
             let timeoutId = null
             let subscription = null
