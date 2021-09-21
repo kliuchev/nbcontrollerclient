@@ -19,7 +19,7 @@ class NBControllerClient {
     connected = false
 
     constructor() {
-        this.disconnectSubscription = this.bleManagerEmitter.add('BleManagerDisconnectPeripheral', this.onDisconnect.bind(this))
+        this.disconnectSubscription = this.bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.onDisconnect.bind(this))
     }
 
     init = () => {
