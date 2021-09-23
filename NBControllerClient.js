@@ -1,6 +1,6 @@
 import BleManager, {connect} from "react-native-ble-manager";
 import {stringToBytes, bytesToString} from "convert-string";
-import { NativeModules, NativeEventEmitter } from "react-native";
+import { NativeModules, NativeEventEmitter, Platform } from "react-native";
 
 const BleManagerModule = NativeModules.BleManager;
 
@@ -20,6 +20,10 @@ class NBControllerClient {
 
     constructor() {
         this.disconnectSubscription = this.bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.onDisconnect.bind(this))
+        if (Platform.os === 'ios') {
+            this.neededService = 'FFE0'
+            this.neededChar = 'FFE1'
+        }
     }
 
     init = () => {
@@ -49,7 +53,10 @@ class NBControllerClient {
                     intervalId = setInterval(async () => {
                         try {
                             const discoveredDevices = await BleManager.getDiscoveredPeripherals();
-                            const bondedDevices = await BleManager.getBondedPeripherals()
+                            let bondedDevices = []
+                            if (Platform.os === 'android') {
+                                bondedDevices = await BleManager.getBondedPeripherals()
+                            }
                             const connectedDevices = await BleManager.getConnectedPeripherals();
                             const devices = [...discoveredDevices, ...bondedDevices, ...connectedDevices]
                             const device = devices.find(item => item.name === deviceId);
@@ -95,7 +102,12 @@ class NBControllerClient {
 
     send = (deviceId, command, responseTimeout = 500, short = true) => {
         return new Promise(async (resolve, reject) => {
-            await this.bleManager.startNotification(deviceId, this.neededService, this.neededChar);
+            try {
+                await this.bleManager.startNotification(deviceId, this.neededService, this.neededChar);
+            } catch (error) {
+                reject(error)
+            }
+
             let response = null
             let timeoutId = null
             let subscription = null
