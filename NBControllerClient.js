@@ -1,4 +1,4 @@
-import BleManager, {connect} from "react-native-ble-manager";
+import BleManager from "react-native-ble-manager";
 import {stringToBytes, bytesToString} from "convert-string";
 import { NativeModules, NativeEventEmitter, Platform } from "react-native";
 
@@ -20,10 +20,12 @@ class NBControllerClient {
 
     constructor() {
         this.disconnectSubscription = this.bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.onDisconnect.bind(this))
-        if (Platform.os === 'ios') {
-            this.neededService = 'FFE0'
-            this.neededChar = 'FFE1'
+        // consopl
+        if (Platform.OS === 'ios') {
+            this.neededService = "FFE0"
+            this.neededChar = "FFE1"
         }
+
     }
 
     init = () => {
@@ -47,14 +49,14 @@ class NBControllerClient {
                     let timeoutId = setTimeout(() => {
                         clearInterval(intervalId)
                         this.cancelScan()
-                        reject(new Error('device not found'))
+                        reject(new Error('Почтомат не найден'))
                     }, searchTimeout)
 
                     intervalId = setInterval(async () => {
                         try {
                             const discoveredDevices = await BleManager.getDiscoveredPeripherals();
                             let bondedDevices = []
-                            if (Platform.os === 'android') {
+                            if (Platform.OS === 'android') {
                                 bondedDevices = await BleManager.getBondedPeripherals()
                             }
                             const connectedDevices = await BleManager.getConnectedPeripherals();
@@ -82,10 +84,10 @@ class NBControllerClient {
         let error = null
         for (let i = 0; i < this.connectionAttempts; i++) {
             try {
-                log(null, `connection attempt ${i + 1}`)
-                await this.bleManager.connect(deviceId)
-                log(null, `retrieve attempt ${i + 1}`)
-                await this.bleManager.retrieveServices(deviceId);
+                log(null, `попытка ${i + 1}`)
+                await this._connect(deviceId)
+                log(null, `попытка ${i + 1}`)
+                await this._retrieveServices(deviceId)
                 error = null
                 break
             } catch (err) {
@@ -100,12 +102,60 @@ class NBControllerClient {
         }
     }
 
+    _connect = async (deviceId, delay = 2000) => {
+        return new Promise(async (resolve, reject) => {
+            let resolved = false
+            let timeout = setTimeout(() => {
+                if (!resolved) {
+                    reject('connect timeout')
+                } else {
+                    resolved = true
+                }
+            }, delay)
+
+            await this.bleManager.connect(deviceId)
+
+            clearTimeout(timeout)
+
+            if (!resolved) {
+                resolved = true
+                resolve()
+            } else {
+                await this.bleManager.disconnect(deviceId)
+            }
+        })
+    }
+
+    _retrieveServices = async (deviceId, delay = 2000) => {
+        return new Promise(async (resolve, reject) => {
+            let resolved = true
+            let timeout = setTimeout(() => {
+                if (!resolved) {
+                    reject('retrieve services timeout')
+                } else {
+                    resolved = true
+                }
+            }, delay)
+
+            await this.bleManager.retrieveServices(deviceId)
+
+            clearTimeout(timeout)
+
+            if (!resolved) {
+                resolved = true
+                resolve()
+            } else {
+                await this.bleManager.disconnect(deviceId)
+            }
+        })
+    }
+
     send = (deviceId, command, responseTimeout = 500, short = true) => {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.bleManager.startNotification(deviceId, this.neededService, this.neededChar);
             } catch (error) {
-                reject(error)
+                return reject(error)
             }
 
             let response = null
@@ -137,7 +187,7 @@ class NBControllerClient {
                 timeoutId = setTimeout(async () => {
                     subscription.remove()
                     if (short) {
-                        reject(new Error('response timeout'))
+                        reject(new Error('Таймаут'))
                     } else {
                         resolve(response)
                     }
